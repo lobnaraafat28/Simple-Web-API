@@ -1,0 +1,133 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+</head>
+<body>
+
+    <section class="container justify-content-center">
+        <h1 class="text-dark">All Records</h1>
+        <div class="row col-6">
+            <button class="btn btn-primary col-4 addButton">Add new Record</button>
+
+        </div>
+        <div class="addArea col-8" style=" display: none; ">
+            <form class="form-group col-10">
+                <label for="Name">Name</label>
+                <input class="input-group Name" type="text" />
+
+                <input type="checkbox" class="custom-control-input Check" id="customCheck1">
+                <label class="custom-control-label" for="customCheck1">Is Activated</label>
+                <button class="btn  btn-success saveButton" style=" display: block; ">Save</button>
+
+            </form>
+        </div>
+        <div class=" row">
+            <table class="table-bordered" id="recordGrid">
+            </table>
+        </div>
+
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(function () {
+            var Check = true
+            ShowRecords();
+          
+            $(".addButton").click(function () {
+                $(".addArea").slideToggle("fast");
+            });
+            $(".saveButton").click(function () {
+                var Name = $(".Name").val();
+                
+                if ($('.Check').prop('checked')==true) {
+                     Check = true;
+                } else {
+                     Check = false;
+                }
+                alert(Check);
+                $.ajax({
+                    url: "https://localhost:7201/api/Record",
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ name: Name, check: Check }),
+                    success: function () {
+                        
+                        ShowRecords();
+                        location.reload();
+                    },
+                    error: function (error) {
+                        alert("Error adding item: " + error.responseText); 
+                        console.error("Error adding item:", error);
+                    }
+                });
+            });
+            function ShowRecords() {
+                $.ajax({
+                    url: "https://localhost:7201/api/Record",
+                    method: 'GET',
+                    success: function (data) {
+                    
+                        CreateGrid(data);
+                        
+                    },
+                    error: function () {
+                        alert("error");
+                    }
+                });
+               
+            }
+
+            function CreateGrid(records) {
+                $("#recordGrid").empty();
+                
+                $("#recordGrid").append("<tr><th>ID</th><th>Name</th><th>Activated</th><th>Action</th></tr>");
+
+                records.forEach(function (record) {
+                    $("#recordGrid").append(
+                        "<tr class='rowData'>" +
+                        "<td class='rId'>" + record.id + "</td>" +
+                        "<td>" + record.name + "</td>" +
+                        "<td>" + record.activated + "</td>" +
+                        "<td><button class='btn btn-danger deleteButton' data-id='" + record.id + "'>Delete</button></td>" +
+                        "</tr>"
+                    );
+                });
+            }
+           
+          
+            $("#recordGrid").on("click", ".deleteButton", function () {
+        var recordId = $(this).data("id");
+        deleteRecord(recordId);
+                     });
+            function deleteRecord(recordId) {
+                $.ajax({
+                    url: "https://localhost:7201/api/Record?id=" + recordId,
+                    type: "DELETE",
+                    success: function () {
+                        ShowRecords();
+                    },
+                    error: function (error) {
+                        console.error("Error deleting item:", error);
+                    }
+                });
+            }
+
+       });
+
+
+
+
+
+    </script>
+</body>
+</html>
